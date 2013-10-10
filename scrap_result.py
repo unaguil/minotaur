@@ -4,6 +4,12 @@ import urllib
 from bs4 import BeautifulSoup
 import re
 
+from data_model import Thesis
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+from datetime import datetime
+
 def clean_str(source_str):
     return unicode(source_str).strip()
     
@@ -14,22 +20,26 @@ def extract_groups(source_str):
     return None, None
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
-
 data = urllib.urlopen(URL)
-
 soup = BeautifulSoup(data.read().decode('utf-8'))
-
 data_section = soup.find_all('div', attrs={'class': 'datos-resultado'})
 
 if len(data_section) != 1:
     print 'Error getting data section element'
+
+USER = 'teseo'
+PASS = 'teseo'
+DB_NAME = 'teseo'
+engine = create_engine('mysql://%s:%s@localhost/%s' % (USER, PASS, DB_NAME), echo=True)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+thesis = Thesis()
     
 for field in data_section[0].find_all('li'):
     identifier = field.strong
     if identifier is not None:
         key = unicode(identifier.next).strip().replace(':', '')
-        
-        print key       
         
         if key == u'Dirección':
             #multiple values
@@ -46,8 +56,15 @@ for field in data_section[0].find_all('li'):
             for descriptor in field.ul.find_all('li'):
                 print clean_str(descriptor.next)
         elif key == u'Resumen':
-            print clean_str(identifier.next_sibling.next_sibling.next)
+            thesis.summary = clean_str(identifier.next_sibling.next_sibling.next)
         else:
-            print clean_str(identifier.next_sibling)
-            
-            
+            value = clean_str(identifier.next_sibling)
+            if key == u'Título':
+                thesis.title = value
+            elif key == u'Autor':
+                thesis.author = value
+            elif key == u'Fecha de Lectura':
+                thesis.defense_date = datetime.strptime(value, '%d/%m/%Y')
+
+session.add(thesis)            
+session.commit()

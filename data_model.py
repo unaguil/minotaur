@@ -2,7 +2,7 @@
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import UnicodeText, DateTime, create_engine, Column
-from sqlalchemy import Integer, ForeignKey
+from sqlalchemy import Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
@@ -44,6 +44,11 @@ class Descriptor(Base):
     
     def __init__(self, text):
         self.text = text
+        
+association_table_thesis_advisor = Table('thesis_advisor', Base.metadata,
+    Column('thesis_id', Integer, ForeignKey('thesis.id')),
+    Column('advisor.id', Integer, ForeignKey('person.id'))
+)
 
 class Thesis(Base):
     __tablename__ = 'thesis'
@@ -51,20 +56,17 @@ class Thesis(Base):
     id = Column(Integer, primary_key=True)
     title =  Column(UnicodeText, nullable=False)
     author = Column(UnicodeText, nullable=False)
-    university = Column(Integer, ForeignKey('university.id'))
-    department = Column(Integer, ForeignKey('department.id'))
     defense_date = Column(DateTime, nullable=False)
     
-    advisors = relationship(Person)
-    panel = relationship(Person)
-    descriptors = relationship(Descriptor)
+    university = Column(Integer, ForeignKey('university.id'))
+    department = Column(Integer, ForeignKey('department.id'))
+    
+    advisors = relationship("Person", 
+        secondary=association_table_thesis_advisor)
+    #panel = relationship("Person")
+    #descriptors = relationship("Descriptor")
     
     summary = Column(UnicodeText, nullable=False)
-    
-    def __init__(self, title, author, summary):
-        self.title = title
-        self.author = author
-        self.summary = summary
 
 if __name__ == '__main__':
     USER = 'teseo'
