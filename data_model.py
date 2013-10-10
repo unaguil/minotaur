@@ -67,6 +67,11 @@ class Thesis(Base):
         self.summary = summary
 
 if __name__ == '__main__':
-    engine = create_engine('mysql://teseo:teseo@localhost/teseo', echo=True)
+    USER = 'teseo'
+    PASS = 'teseo'
+    
+    DB_NAME = 'teseo'
+    
+    engine = create_engine('mysql://%s:%s@localhost/%s' % (USER, PASS, DB_NAME), echo=True)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
