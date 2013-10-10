@@ -2,9 +2,16 @@
 
 import urllib
 from bs4 import BeautifulSoup
+import re
 
 def clean_str(source_str):
     return unicode(source_str).strip()
+    
+def extract_groups(source_str):
+    matched = re.match(r'(.*?)\((.*?)\)', source_str, re.DOTALL)
+    if matched is not None:
+        return matched.groups()[0].strip(), matched.groups()[1].strip()
+    return None, None
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
 
@@ -27,11 +34,13 @@ for field in data_section[0].find_all('li'):
         if key == u'Dirección':
             #multiple values
             for advisor in field.ul.find_all('li'):
-                print clean_str(advisor.next)
+                name, position = extract_groups(clean_str(advisor.next))
+                print '(%s) %s' % (position, name)
         elif key == u'Tribunal':
             #multiple values
             for panel_member in field.ul.find_all('li'):
-                print clean_str(panel_member.next)
+                name, position = extract_groups(clean_str(panel_member.next))
+                print '(%s) %s' % (position, name)
         elif key == u'Descriptores':
             #multiple values
             for descriptor in field.ul.find_all('li'):
