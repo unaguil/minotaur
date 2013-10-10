@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
 
-conn = urllib.urlopen(URL)
+data = urllib.urlopen(URL)
 
-soup = BeautifulSoup(conn)
+soup = BeautifulSoup(data.read().decode('utf-8'))
 
 data_section = soup.find_all('div', attrs={'class': 'datos-resultado'})
 
@@ -37,5 +37,5 @@ for field in data_section[0].find_all('li'):
             print unicode(identifier.next_sibling.next_sibling.next).strip()
         else:
             print unicode(identifier.next_sibling).strip()
-        
-conn.close()
+    
+    
