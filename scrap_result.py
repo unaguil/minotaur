@@ -22,6 +22,13 @@ def extract_groups(source_str):
     return None, None
     
 def scrap_page(page_url, university, session):
+    data = urllib.urlopen(page_url)
+    soup = BeautifulSoup(data.read().decode('utf-8'))
+    data_section = soup.find_all('div', attrs={'class': 'datos-resultado'})
+    
+    if len(data_section) != 1:
+        raise Exception('Error getting data section element')
+    
     thesis = Thesis()
     thesis.university = university
     
@@ -70,13 +77,6 @@ def scrap_page(page_url, university, session):
     session.commit()
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
-data = urllib.urlopen(URL)
-soup = BeautifulSoup(data.read().decode('utf-8'))
-data_section = soup.find_all('div', attrs={'class': 'datos-resultado'})
-
-if len(data_section) != 1:
-    print 'Error getting data section element'
-
 USER = 'teseo'
 PASS = 'teseo'
 DB_NAME = 'teseo'
