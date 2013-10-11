@@ -107,6 +107,6 @@ if __name__ == '__main__':
     
     DB_NAME = 'teseo'
     
-    engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME), echo=True)
+    engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)

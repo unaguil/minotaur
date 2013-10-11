@@ -4,8 +4,8 @@ import urllib
 from bs4 import BeautifulSoup
 import re
 
-from data_model import Thesis, Person, Descriptor, Department
-from data_model import University, Advisor, PanelMember
+from teseo_model import Thesis, Person, Descriptor, Department
+from teseo_model import University, Advisor, PanelMember
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
