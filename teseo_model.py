@@ -99,7 +99,7 @@ class Thesis(Base):
     descriptors = relationship("Descriptor",
             secondary=association_thesis_description)
     
-    summary = Column(UnicodeText, nullable=False)
+    summary = Column(UnicodeText)
 
 if __name__ == '__main__':
     USER = 'teseo'

@@ -9,6 +9,7 @@ import re
 
 from teseo_model import Thesis, Person, Descriptor, Department
 from teseo_model import University, Advisor, PanelMember
+from teseo_model import Base
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -96,7 +97,7 @@ def get_universities():
         
     return universities
     
-def request_theses(theses_ids):
+def request_theses(session, theses_ids):
     page_url = 'https://www.educacion.gob.es/teseo/mostrarSeleccion.do'
             
     selection = ''
@@ -112,7 +113,6 @@ def request_theses(theses_ids):
     
     page_url = 'https://www.educacion.gob.es/teseo/mostrarDetalle.do'
         
-    theses = []
     for index in theses_ids:
         post_data = {'indice': index}
         
@@ -122,11 +122,11 @@ def request_theses(theses_ids):
         response = opener.open(request_object)
     
         thesis = scrap_data(response)
-        theses.append(thesis)
+        session.add(thesis)
+        session.commit()
     
-    return theses
-    
-def get_theses(university_id, courseFrom, courseUntil, max_rpp = 5000, limit=None):
+def save_theses(session, university_id, courseFrom, courseUntil, 
+        max_rpp = 5000, limit=5000):
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
     
     post_data = {
@@ -153,15 +153,33 @@ def get_theses(university_id, courseFrom, courseUntil, max_rpp = 5000, limit=Non
     
     print 'Retrieving %s theses of %s' % (retrieved_theses, num_theses)
     
-    return request_theses(range(0, retrieved_theses))
+    request_theses(session, range(0, retrieved_theses))
+    
+def save_universities(session):
+    universities = get_universities()
+    
+    count = 0
+    for university in universities.keys():
+        if session.query(University).filter_by(name=university).first() is None:
+            session.add(University(university))
+            session.commit()
+            count = count + 1
+        
+    print '%s universities saved' % count
+    
+    return universities
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
 USER = 'teseo'
 PASS = 'teseo'
 DB_NAME = 'teseo'
 engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
+
 Session = sessionmaker(bind=engine)
 session = Session()
 
-for thesis in get_theses(1, 95, 95, limit=2):
-    print thesis.title
+universities = save_universities(session)
+
+for (university, id) in universities.items():
+    print 'Saving thesis from %s' % university
+    save_theses(session, id, 95, 95, limit=1)
