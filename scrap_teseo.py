@@ -76,7 +76,8 @@ def scrap_data(data):
                 if key == u'Título':
                     thesis.title = value
                 elif key == u'Autor':
-                    thesis.author = value
+                    author = Person(value)
+                    thesis.author = author
                 elif key == u'Fecha de Lectura':
                     thesis.defense_date = datetime.strptime(value, '%d/%m/%Y')
                 elif key == u'Departamento':

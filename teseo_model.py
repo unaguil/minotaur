@@ -46,10 +46,10 @@ class Descriptor(Base):
 class Advisor(Base):
     __tablename__ = 'advisor'
 
-    thesis_id = Column(Integer, ForeignKey('thesis.id'), primary_key=True)
+    thesis_id = Column(Integer, ForeignKey('thesis.id', ondelete='cascade'), primary_key=True)
     thesis = relationship("Thesis")
     
-    person_id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('person.id', ondelete='cascade'), primary_key=True)
     person = relationship("Person")
     
     role = Column(UnicodeText, nullable=False)
@@ -61,10 +61,10 @@ class Advisor(Base):
 class PanelMember(Base):
     __tablename__ = 'panel_member'
     
-    thesis_id = Column(Integer, ForeignKey('thesis.id'), primary_key=True)
+    thesis_id = Column(Integer, ForeignKey('thesis.id', ondelete='cascade'), primary_key=True)
     thesis = relationship("Thesis")
     
-    person_id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('person.id', ondelete='cascade'), primary_key=True)
     person = relationship("Person")
     
     role = Column(UnicodeText, nullable=False)
@@ -75,8 +75,8 @@ class PanelMember(Base):
 
 association_thesis_description = Table('association_thesis_description', 
     Base.metadata,
-    Column('thesis_id', Integer, ForeignKey('thesis.id')),
-    Column('descriptor_id', Integer, ForeignKey('descriptor.id'))
+    Column('thesis_id', Integer, ForeignKey('thesis.id', ondelete='cascade')),
+    Column('descriptor_id', Integer, ForeignKey('descriptor.id', ondelete='cascade'))
 )        
 
 class Thesis(Base):
@@ -84,19 +84,22 @@ class Thesis(Base):
     
     id = Column(Integer, primary_key=True)
     title =  Column(UnicodeText, nullable=False)
-    author = Column(UnicodeText, nullable=False)
+    
+    author_id = Column(Integer, ForeignKey('person.id'))
+    author = relationship('Person')
+    
     defense_date = Column(DateTime, nullable=False)
     
     university_id = Column(Integer, ForeignKey('university.id'))
-    university = relationship("University")
+    university = relationship('University')
     
     department_id = Column(Integer, ForeignKey('department.id'))
-    department = relationship("Department")
+    department = relationship('Department')
     
-    advisors = relationship("Advisor")
-    panel = relationship("PanelMember")
+    advisors = relationship('Advisor')
+    panel = relationship('PanelMember')
     
-    descriptors = relationship("Descriptor",
+    descriptors = relationship('Descriptor',
             secondary=association_thesis_description)
     
     summary = Column(UnicodeText)
