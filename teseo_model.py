@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import UnicodeText, DateTime, create_engine, Column
+from sqlalchemy import UnicodeText, Date, create_engine, Column
 from sqlalchemy import Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
@@ -88,7 +88,7 @@ class Thesis(Base):
     author_id = Column(Integer, ForeignKey('person.id'))
     author = relationship('Person')
     
-    defense_date = Column(DateTime, nullable=False)
+    defense_date = Column(Date, nullable=False)
     
     university_id = Column(Integer, ForeignKey('university.id'))
     university = relationship('University')
