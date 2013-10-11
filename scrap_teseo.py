@@ -6,6 +6,8 @@ import cookielib
 from bs4 import BeautifulSoup
 import cookielib
 import re
+import argparse
+import sys
 
 from teseo_model import Thesis, Person, Descriptor, Department
 from teseo_model import University, Advisor, PanelMember
@@ -124,9 +126,13 @@ def request_theses(session, theses_ids):
         thesis = scrap_data(response)
         session.add(thesis)
         session.commit()
+        print 'Retrieved thesis id %s' % index
     
-def save_theses(session, university_id, courseFrom, courseUntil, 
+def save_theses(session, university_id, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
+    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university,
+        startCourse, startCourse + 1, endCourse, endCourse + 1)
+    
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
     
     post_data = {
@@ -136,10 +142,10 @@ def save_theses(session, university_id, courseFrom, courseUntil,
                 'doctorando': '',
                 'nif': '',
                 'idUni': university_id,
-                'cursoDesde': '%s' % courseFrom,
-                'cursoDesde2': '%s' % (courseFrom + 1),
-                'cursoHasta': '%s' % courseUntil,
-                'cursoHasta2': '%s' % (courseUntil + 1) }
+                'cursoDesde': '%s' % startCourse,
+                'cursoDesde2': '%s' % (startCourse + 1),
+                'cursoHasta': '%s' % endCourse,
+                'cursoHasta2': '%s' % (endCourse + 1) }
     
     post_data_encoded = urllib.urlencode(post_data)
     
@@ -156,30 +162,74 @@ def save_theses(session, university_id, courseFrom, courseUntil,
     request_theses(session, range(0, retrieved_theses))
     
 def save_universities(session):
+    print 'Extracting university information from Teseo'
     universities = get_universities()
     
-    count = 0
+    added = 0
+    present = 0
     for university in universities.keys():
         if session.query(University).filter_by(name=university).first() is None:
             session.add(University(university))
             session.commit()
-            count = count + 1
+            added = added + 1
+        else:
+            present = present + 1
         
-    print '%s universities saved' % count
+    print '%s universities saved. %s already downloaded' % (added, present)
+    print ''
     
     return universities
+    
+if __name__ == '__main__':
+    message= """Scrapper for Teseo Web 
+    https://www.educacion.gob.es/teseo/"""
+    parser = argparse.ArgumentParser(description=message)
+    parser.add_argument('--startCourse', dest='startCourse', type=int, default=95,
+                   help='starting course for page scrapping: 95 -> 95/96')
+                   
+    parser.add_argument('--endCourse', dest='endCourse', type=int, default=95,
+                   help='ending course for page scrapping: 01 -> 01/02')
+                   
+    parser.add_argument('--limit', dest='limit', type=int, default=1,
+                    help='number of maximun thesis to download for each university')
+                    
+    parser.add_argument('--universities', dest='universities', type=str, default=[],
+                    nargs='+', help='list of comma separated strings: "deusto", "alcalá"')
+                    
+    parser.add_argument('--list-universities', dest='list_universities', action='store_true',
+                    help='returns a list of available universities')
 
-URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
-USER = 'teseo'
-PASS = 'teseo'
-DB_NAME = 'teseo'
-engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
+    args = parser.parse_args()
+    
+    if args.list_universities:
+        for university in get_universities().keys():
+            print university
+    else:    
+        URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
+        USER = 'teseo'
+        PASS = 'teseo'
+        DB_NAME = 'teseo'
+        engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
 
-Session = sessionmaker(bind=engine)
-session = Session()
+        Session = sessionmaker(bind=engine)
+        session = Session()
+    
+        universities = save_universities(session)
+        
+        if len(args.universities) > 0:
+            selected = []
+            for university in args.universities:
+                selected.append(university.decode('utf-8').upper())
+            invalid_universities = set(selected) - set(universities.keys())
 
-universities = save_universities(session)
-
-for (university, id) in universities.items():
-    print 'Saving thesis from %s' % university
-    save_theses(session, id, 95, 95, limit=1)
+            if len(invalid_universities) > 0:
+                print 'Invalid university found:'
+                for invalid in list(invalid_universities):
+                    print '\t %s' % invalid
+                sys.exit(0)
+                
+            universities = dict([ (k, universities[k]) for k in selected ])
+        
+        for (university, id) in universities.items():
+            save_theses(session, id, args.startCourse, args.endCourse, limit=args.limit)
+    
