@@ -134,7 +134,7 @@ def request_theses(session, theses_ids, university):
     
 def save_theses(session, university_id, university_name, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
-    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_name,
+    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_id,
         startCourse, startCourse + 1, endCourse, endCourse + 1)
     
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
@@ -163,7 +163,7 @@ def save_theses(session, university_id, university_name, startCourse, endCourse,
     
     print 'Retrieving %s theses of %s' % (retrieved_theses, num_theses)
     
-    university = session.query(University).filter_by(id=university_id).first()
+    university = session.query(University).filter_by(name=university_name).first()
     
     request_theses(session, range(0, retrieved_theses), university)
     
@@ -235,7 +235,6 @@ if __name__ == '__main__':
                 sys.exit(0)
                 
             universities = dict([ (k, universities[k]) for k in selected ])
-        
         
         print 'Extracting all data from %s to %s' % (args.startCourse, args.endCourse)
         for currentCourse in range(args.startCourse, args.endCourse + 1):
