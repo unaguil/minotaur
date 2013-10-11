@@ -84,6 +84,6 @@ engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, 
 Session = sessionmaker(bind=engine)
 session = Session()
 
-university = University('Deusto')
+university = University(u'Deusto')
 
 scrap_page(URL, university, session)
