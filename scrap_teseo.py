@@ -100,7 +100,7 @@ def get_universities():
         
     return universities
     
-def request_theses(session, theses_ids):
+def request_theses(session, theses_ids, university):
     page_url = 'https://www.educacion.gob.es/teseo/mostrarSeleccion.do'
             
     selection = ''
@@ -125,15 +125,16 @@ def request_theses(session, theses_ids):
         response = opener.open(request_object)
     
         thesis = scrap_data(response)
+        thesis.university = university
         session.add(thesis)
         session.commit()
         print 'Retrieved thesis id %s' % index
     
     print ''
     
-def save_theses(session, university_id, startCourse, endCourse, 
+def save_theses(session, university_id, university_name, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
-    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university,
+    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_name,
         startCourse, startCourse + 1, endCourse, endCourse + 1)
     
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
@@ -162,7 +163,9 @@ def save_theses(session, university_id, startCourse, endCourse,
     
     print 'Retrieving %s theses of %s' % (retrieved_theses, num_theses)
     
-    request_theses(session, range(0, retrieved_theses))
+    university = session.query(University).filter_by(id=university_id).first()
+    
+    request_theses(session, range(0, retrieved_theses), university)
     
 def save_universities(session):
     print 'Extracting university information from Teseo'
@@ -233,6 +236,11 @@ if __name__ == '__main__':
                 
             universities = dict([ (k, universities[k]) for k in selected ])
         
-        for (university, id) in universities.items():
-            save_theses(session, id, args.startCourse, args.endCourse, limit=args.limit)
+        
+        print 'Extracting all data from %s to %s' % (args.startCourse, args.endCourse)
+        for currentCourse in range(args.startCourse, args.endCourse + 1):
+            print 'Current extraction from %s to %s' % (currentCourse, currentCourse)
+            for (university_name, university_id) in universities.items():
+                save_theses(session, university_id, university_name, currentCourse, currentCourse, limit=args.limit)
+            print ''
     
