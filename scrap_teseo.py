@@ -187,7 +187,7 @@ def save_universities(session):
     return universities
     
 if __name__ == '__main__':
-    message= """Scrapper for Teseo Web 
+    message= """Scraper for Teseo Web 
     https://www.educacion.gob.es/teseo/"""
     parser = argparse.ArgumentParser(description=message)
     parser.add_argument('--startCourse', dest='startCourse', type=int, default=95,
