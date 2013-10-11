@@ -129,6 +129,8 @@ def request_theses(session, theses_ids):
         session.commit()
         print 'Retrieved thesis id %s' % index
     
+    print ''
+    
 def save_theses(session, university_id, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
     print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university,
