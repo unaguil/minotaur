@@ -30,11 +30,9 @@ class Person(Base):
     
     id = Column(Integer, primary_key=True)
     name = Column(UnicodeText, nullable=False)
-    position = Column(UnicodeText, nullable=False)
     
-    def __init__(self, name, position):
+    def __init__(self, name):
         self.name = name
-        self.position = position
     
 class Descriptor(Base):
     __tablename__ = 'descriptor'
@@ -44,11 +42,42 @@ class Descriptor(Base):
     
     def __init__(self, text):
         self.text = text
+
+class Advisor(Base):
+    __tablename__ = 'advisor'
+
+    thesis_id = Column(Integer, ForeignKey('thesis.id'), primary_key=True)
+    thesis = relationship("Thesis")
+    
+    person_id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    person = relationship("Person")
+    
+    role = Column(UnicodeText, nullable=False)
+    
+    def __init__(self, person, role):
+        self.person = person
+        self.role = role
         
-association_table_thesis_advisor = Table('thesis_advisor', Base.metadata,
+class PanelMember(Base):
+    __tablename__ = 'panel_member'
+    
+    thesis_id = Column(Integer, ForeignKey('thesis.id'), primary_key=True)
+    thesis = relationship("Thesis")
+    
+    person_id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    person = relationship("Person")
+    
+    role = Column(UnicodeText, nullable=False)
+    
+    def __init__(self, person, role):
+        self.person = person
+        self.role = role
+
+association_thesis_description = Table('association_thesis_description', 
+    Base.metadata,
     Column('thesis_id', Integer, ForeignKey('thesis.id')),
-    Column('advisor.id', Integer, ForeignKey('person.id'))
-)
+    Column('descriptor_id', Integer, ForeignKey('descriptor.id'))
+)        
 
 class Thesis(Base):
     __tablename__ = 'thesis'
@@ -58,13 +87,17 @@ class Thesis(Base):
     author = Column(UnicodeText, nullable=False)
     defense_date = Column(DateTime, nullable=False)
     
-    university = Column(Integer, ForeignKey('university.id'))
-    department = Column(Integer, ForeignKey('department.id'))
+    university_id = Column(Integer, ForeignKey('university.id'))
+    university = relationship("University")
     
-    advisors = relationship("Person", 
-        secondary=association_table_thesis_advisor)
-    #panel = relationship("Person")
-    #descriptors = relationship("Descriptor")
+    department_id = Column(Integer, ForeignKey('department.id'))
+    department = relationship("Department")
+    
+    advisors = relationship("Advisor")
+    panel = relationship("PanelMember")
+    
+    descriptors = relationship("Descriptor",
+            secondary=association_thesis_description)
     
     summary = Column(UnicodeText, nullable=False)
 
@@ -74,6 +107,6 @@ if __name__ == '__main__':
     
     DB_NAME = 'teseo'
     
-    engine = create_engine('mysql://%s:%s@localhost/%s' % (USER, PASS, DB_NAME), echo=True)
+    engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME), echo=True)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
