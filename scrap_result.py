@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import urllib
+import urllib2
 from bs4 import BeautifulSoup
 import re
 
@@ -75,6 +76,39 @@ def scrap_page(page_url, university, session):
 
     session.add(thesis)            
     session.commit()
+    
+def get_universities():
+    page_url = 'https://www.educacion.gob.es/teseo/irGestionarConsulta.do'
+    data = urllib.urlopen(page_url)
+    soup = BeautifulSoup(data.read().decode('utf-8'))
+    
+    universities = {}
+    for option in soup.find_all('option'):
+        if not option['value'] == '0':
+            universities[(clean_str(option.next))] = option['value']
+        
+    return universities
+    
+def get_thesis_from_university(university_id):
+    page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
+    
+    post_data = {'tipo': 'simple',
+                'rpp': '25',
+                'titulo': '',
+                'doctorando': '',
+                'nif': '',
+                'idUni': university_id,
+                'cursoDesde': '',
+                'cursoDesde2': '',
+                'cursoHasta': '',
+                'cursoHasta2': '' }
+    
+    post_data_encoded = urllib.urlencode(post_data)
+    
+    request_object = urllib2.Request(page_url, post_data_encoded)
+    response = urllib2.urlopen(request_object)
+    html_string = response.read()
+    print html_string
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
 USER = 'teseo'
@@ -83,7 +117,3 @@ DB_NAME = 'teseo'
 engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
 Session = sessionmaker(bind=engine)
 session = Session()
-
-university = University(u'Deusto')
-
-scrap_page(URL, university, session)
