@@ -2,7 +2,9 @@
 
 import urllib
 import urllib2
+import cookielib
 from bs4 import BeautifulSoup
+import cookielib
 import re
 
 from teseo_model import Thesis, Person, Descriptor, Department
@@ -13,6 +15,14 @@ from sqlalchemy import create_engine
 
 from datetime import datetime
 
+cookies = cookielib.LWPCookieJar()
+handlers = [
+        urllib2.HTTPHandler(),
+        urllib2.HTTPSHandler(),
+        urllib2.HTTPCookieProcessor(cookies)
+    ]
+opener = urllib2.build_opener(*handlers)
+
 def clean_str(source_str):
     return unicode(source_str).strip()
     
@@ -22,8 +32,7 @@ def extract_groups(source_str):
         return matched.groups()[0].strip(), matched.groups()[1].strip()
     return None, None
     
-def scrap_page(page_url, university, session):
-    data = urllib.urlopen(page_url)
+def scrap_data(data):
     soup = BeautifulSoup(data.read().decode('utf-8'))
     data_section = soup.find_all('div', attrs={'class': 'datos-resultado'})
     
@@ -31,7 +40,6 @@ def scrap_page(page_url, university, session):
         raise Exception('Error getting data section element')
     
     thesis = Thesis()
-    thesis.university = university
     
     for field in data_section[0].find_all('li'):
         identifier = field.strong
@@ -74,8 +82,7 @@ def scrap_page(page_url, university, session):
                         department = Department(value)
                     thesis.department = department
 
-    session.add(thesis)            
-    session.commit()
+    return thesis
     
 def get_universities():
     page_url = 'https://www.educacion.gob.es/teseo/irGestionarConsulta.do'
@@ -89,26 +96,64 @@ def get_universities():
         
     return universities
     
-def get_thesis_from_university(university_id):
-    page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
+def request_theses(theses_ids):
+    page_url = 'https://www.educacion.gob.es/teseo/mostrarSeleccion.do'
+            
+    selection = ''
+    for thesis_id in theses_ids:
+        selection = selection + '%s:' % thesis_id
     
-    post_data = {'tipo': 'simple',
-                'rpp': '25',
-                'titulo': '',
-                'doctorando': '',
-                'nif': '',
-                'idUni': university_id,
-                'cursoDesde': '',
-                'cursoDesde2': '',
-                'cursoHasta': '',
-                'cursoHasta2': '' }
+    post_data = {'seleccionFichas': selection}
     
     post_data_encoded = urllib.urlencode(post_data)
     
     request_object = urllib2.Request(page_url, post_data_encoded)
-    response = urllib2.urlopen(request_object)
-    html_string = response.read()
-    print html_string
+    response = opener.open(request_object)
+    
+    page_url = 'https://www.educacion.gob.es/teseo/mostrarDetalle.do'
+        
+    theses = []
+    for index in theses_ids:
+        post_data = {'indice': index}
+        
+        post_data_encoded = urllib.urlencode(post_data)
+        
+        request_object = urllib2.Request(page_url, post_data_encoded)
+        response = opener.open(request_object)
+    
+        thesis = scrap_data(response)
+        theses.append(thesis)
+    
+    return theses
+    
+def get_theses(university_id, courseFrom, courseUntil, max_rpp = 5000, limit=None):
+    page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
+    
+    post_data = {
+                'tipo': 'simple',
+                'rpp': max_rpp,
+                'titulo': '',
+                'doctorando': '',
+                'nif': '',
+                'idUni': university_id,
+                'cursoDesde': '%s' % courseFrom,
+                'cursoDesde2': '%s' % (courseFrom + 1),
+                'cursoHasta': '%s' % courseUntil,
+                'cursoHasta2': '%s' % (courseUntil + 1) }
+    
+    post_data_encoded = urllib.urlencode(post_data)
+    
+    request_object = urllib2.Request(page_url, post_data_encoded)
+    response = opener.open(request_object)
+    
+    soup = BeautifulSoup(response.read().decode('utf-8'))
+    num_theses = len(soup.find_all('input', attrs = {'id': re.compile("\d+")}))
+    
+    retrieved_theses = min(limit, num_theses)
+    
+    print 'Retrieving %s theses of %s' % (retrieved_theses, num_theses)
+    
+    return request_theses(range(0, retrieved_theses))
 
 URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
 USER = 'teseo'
@@ -117,3 +162,6 @@ DB_NAME = 'teseo'
 engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
 Session = sessionmaker(bind=engine)
 session = Session()
+
+for thesis in get_theses(1, 95, 95, limit=2):
+    print thesis.title
