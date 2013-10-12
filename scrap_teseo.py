@@ -134,7 +134,7 @@ def request_theses(session, theses_ids, university):
     
 def save_theses(session, university_id, university_name, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
-    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_id,
+    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_name,
         startCourse, startCourse + 1, endCourse, endCourse + 1)
     
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
@@ -211,7 +211,6 @@ if __name__ == '__main__':
         for university in get_universities().keys():
             print university
     else:    
-        URL = 'https://www.educacion.gob.es/teseo/mostrarRef.do?ref=1030824'
         USER = 'teseo'
         PASS = 'teseo'
         DB_NAME = 'teseo'
