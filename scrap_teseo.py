@@ -8,6 +8,7 @@ import cookielib
 import re
 import argparse
 import sys
+import time
 
 from teseo_model import Thesis, Person, Descriptor, Department
 from teseo_model import University, Advisor, PanelMember
@@ -115,6 +116,8 @@ def request_theses(session, theses_ids, university):
     response = opener.open(request_object)
     
     page_url = 'https://www.educacion.gob.es/teseo/mostrarDetalle.do'
+    
+    print 'Retrieving %s theses' % len(theses_ids)
         
     for index in theses_ids:
         post_data = {'indice': index}
@@ -128,13 +131,16 @@ def request_theses(session, theses_ids, university):
         thesis.university = university
         session.add(thesis)
         session.commit()
-        print 'Retrieved thesis id %s' % index
+        
+        sys.stdout.write('\r Retrieved %s of %s' % (index + 1, len(theses_ids)))
+        sys.stdout.flush()
+        #time.sleep(5)
     
     print ''
     
 def save_theses(session, university_id, university_name, startCourse, endCourse, 
         max_rpp = 5000, limit=5000):
-    print 'Saving thesis from university %s. %s/%s -> %s/%s' % (university_name,
+    print 'Saving thesis from university %s. %02d/%02d -> %02d/%02d' % (university_name,
         startCourse, startCourse + 1, endCourse, endCourse + 1)
     
     page_url = 'https://www.educacion.gob.es/teseo/listarBusqueda.do'
@@ -146,26 +152,31 @@ def save_theses(session, university_id, university_name, startCourse, endCourse,
                 'doctorando': '',
                 'nif': '',
                 'idUni': university_id,
-                'cursoDesde': '%s' % startCourse,
-                'cursoDesde2': '%s' % (startCourse + 1),
-                'cursoHasta': '%s' % endCourse,
-                'cursoHasta2': '%s' % (endCourse + 1) }
+                'cursoDesde': '%02d' % startCourse,
+                'cursoDesde2': '%02d' % (startCourse + 1),
+                'cursoHasta': '%02d' % endCourse,
+                'cursoHasta2': '%02d' % (endCourse + 1) }
     
     post_data_encoded = urllib.urlencode(post_data)
     
     request_object = urllib2.Request(page_url, post_data_encoded)
-    response = opener.open(request_object)
     
-    soup = BeautifulSoup(response.read().decode('utf-8'))
-    num_theses = len(soup.find_all('input', attrs = {'id': re.compile("\d+")}))
+    while True:
+        try:
+            response = opener.open(request_object)
+            soup = BeautifulSoup(response.read().decode('utf-8'))
+            num_theses = len(soup.find_all('input', attrs = {'id': re.compile("\d+")}))
     
-    retrieved_theses = min(limit, num_theses)
+            retrieved_theses = min(limit, num_theses)
     
-    print 'Retrieving %s theses of %s' % (retrieved_theses, num_theses)
+            university = session.query(University).filter_by(name=university_name).first()
     
-    university = session.query(University).filter_by(name=university_name).first()
-    
-    request_theses(session, range(0, retrieved_theses), university)
+            request_theses(session, range(0, retrieved_theses), university)
+            break
+        except Exception:
+            print 'Problem fetching data. Trying again' 
+            time.sleep(10)
+            continue
     
 def save_universities(session):
     print 'Extracting university information from Teseo'
