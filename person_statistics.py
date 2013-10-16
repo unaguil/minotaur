@@ -23,7 +23,7 @@ total_persons_matched = cursor.fetchall()[0][0]
 
 #print 'Distinct persons: %.2f' % (total_distinct_persons / float(total_persons) * 100)
 
-missing_query = "select count(*) from person where lower(name) not regexp '%s'" % regex
+missing_query = "select count(*) from person where name like '%%,%%' and lower(name) not regexp '%s';" % regex
 cursor.execute(missing_query)
 print missing_query
 total_missing_persons = cursor.fetchall()[0][0]
