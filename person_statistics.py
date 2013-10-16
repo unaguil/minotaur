@@ -13,7 +13,7 @@ total_persons = cursor.fetchall()[0][0]
 #cursor.execute('select count(distinct name) from person;')
 #total_distinct_persons = cursor.fetchall()[0][0]
 
-regex = '^(de(l?|([[:space:]]+la))[[:space:]])?[[:alpha:]]+([[:space:]]+(de(l?|([[:space:]]+la))[[:space:]])?[[:alpha:]]+)?,[[:space:]]+[[:alpha:][:space:]\.-]+$'
+regex = '^(de(l?|([[:space:]]+la))[[:space:]])?[[:alpha:]-]+([[:space:]]+(de(l?|([[:space:]]+la))[[:space:]])?[[:alpha:]-]+)?,[[:space:]]+[[:alpha:][:space:]\.-]+$'
 
 cursor.execute("select count(*) from person where name like '%,%';")
 total_persons_with_comma = cursor.fetchall()[0][0]
