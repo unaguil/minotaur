@@ -34,3 +34,6 @@ print 'Persons with comma: %.2f' % (total_persons_with_comma / float(total_perso
 print '\t Persons with comma and simple surnames: %.2f' % (total_persons_with_comma_simple_surnames / float(total_persons_with_comma) * 100)
 print '\t Persons with comma and one surname: %.2f' % (total_persons_with_comma_one_surname / float(total_persons_with_comma) * 100)
 print '\t Persons with comma missing: %.2f' % (missing_persons_with_comma / float(total_persons_with_comma) * 100)
+
+print ''
+print 'Total missing: %.2f' % ((total_persons - total_persons_with_comma + missing_persons_with_comma) / float(total_persons) * 100)
