@@ -34,10 +34,16 @@ for (index, (id, name)) in enumerate(result):
             first_name = match.group(3).strip()
         else:
             first_name = ''
-            
-        cursor.execute("update person set first_name='%s', first_surname='%s', second_surname='%s' where id='%s'" % (first_name, first_surname, second_surname, id))
+        
+        cursor.execute("update person set first_name='%s', first_surname='%s', second_surname='%s' where id=%s;" % (first_name, first_surname, second_surname, id))
 
     sys.stdout.write('\r Processed %s of %s' % (index + 1, total))
     sys.stdout.flush()
+
+sys.stdout.write('\n')    
+
+conn.commit()
+
+print 'Process finished'
 
 conn.close()
