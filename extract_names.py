@@ -11,7 +11,7 @@ cursor = conn.cursor()
 
 sql_regex = '^([[:space:]]*((de(l?|([[:space:]]+la))|san|la)[[:space:]]+)?[[:alpha:]-]+){1,2}[[:space:]]*,?[[:space:]]+[[:alpha:][:space:]\.-]+$'
 
-pattern = re.compile('^(\s*(?:(?:de(?:l?|(?:\s+la))|san|la)\s+)?[\w-]+)(\s*(?:(?:de(?:l?|(?:\s+la))|san|la)\s+)?[\w-]+)?\s*,?\s+([\w\s\.-]+)$')
+pattern = re.compile('^(\s*(?:(?:de(?:l?|(?:\s+la))|san|la)\s+)?[\w-]+)(\s*(?:(?:de(?:l?|(?:\s+la))|san|la)\s+)?[\w-]+)?\s*,?\s+([\w\s\.-]+)$', re.UNICODE)
 
 cursor.execute("select id, lower(name) from person where lower(name) regexp '%s';" % sql_regex)
 
