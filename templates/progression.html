@@ -1,7 +1,48 @@
 <!doctype html>
-<title>Hello from Flask</title>
-{% if university_name %}
-  <h1>Hello {{ university_name }}!</h1>
-{% else %}
-  <h1>Hello World!</h1>
-{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nv.d3.css') }}" />
+<body>
+
+<h1>Hello {{ university.name }}!</h1>
+
+<style>
+
+#chart svg {
+  height: 400px;
+}
+
+</style>
+
+<div id="chart">
+  <svg></svg>
+</div>
+
+<script src="{{ url_for('static', filename='js/d3.v3.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nv.d3.js') }}"></script>
+
+<script>
+
+alert('{{data | safe }}')
+
+var data = eval('{{data | safe }}')
+
+nv.addGraph(function() {
+  var chart = nv.models.discreteBarChart()
+      .x(function(d) { return d.label })
+      .y(function(d) { return d.value })
+      .staggerLabels(true)
+      .tooltips(false)
+      .showValues(true)
+
+  d3.select('#chart svg')
+      .datum(data)
+    .transition().duration(500)
+      .call(chart);
+
+  nv.utils.windowResize(chart.update);
+
+  return chart;
+});
+
+</script>
+
+</body>
