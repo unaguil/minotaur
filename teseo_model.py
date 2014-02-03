@@ -84,6 +84,9 @@ class Thesis(Base):
     
     id = Column(Integer, primary_key=True)
     title =  Column(UnicodeText, nullable=False)
+
+    def __init__(self, id=None):
+        self.id = id
     
     author_id = Column(Integer, ForeignKey('person.id'))
     author = relationship('Person')
@@ -105,11 +108,13 @@ class Thesis(Base):
     summary = Column(UnicodeText)
 
 if __name__ == '__main__':
-    USER = 'teseo'
-    PASS = 'teseo'
+    # USER = 'teseo'
+    # PASS = 'teseo'
     
-    DB_NAME = 'teseo'
+    # DB_NAME = 'teseo'
     
-    engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
+    # engine = create_engine('mysql://%s:%s@localhost/%s?charset=utf8' % (USER, PASS, DB_NAME))
+    
+    engine = create_engine('sqlite:///minotaur.db')
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
